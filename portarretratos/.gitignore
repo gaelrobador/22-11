@@ -3,3 +3,4 @@ __pycache__/
 # tiene contraseñas: no se sube
 settings.py
 fechas.json
+*.mpy

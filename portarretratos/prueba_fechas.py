@@ -1,4 +1,4 @@
-# Prueba paso a paso del arranque del robot, para ver dónde falla o se traba.
+# Prueba paso a paso (con robot.mpy ya cargado en la placa) del arranque del robot, para ver dónde falla o se traba.
 #   mpremote connect /dev/ttyACM0 run prueba_fechas.py
 # Cada línea muestra los segundos desde el inicio. Si se queda trabada, la última línea dice en qué paso.
 import gc, time
@@ -39,7 +39,7 @@ for nombre, f in (('hora', R._hora), ('fechas (sin pantalla)', R._fechas)):
     except Exception as e:
         paso('   ERROR ' + repr(e))
 
-import main as M                      # ahora carga el robot completo y prende la pantalla
+import robot as M                     # ahora carga el robot completo y prende la pantalla
 paso('robot cargado')
 for i in range(200):
     M.ojos.draw(time.ticks_ms())
