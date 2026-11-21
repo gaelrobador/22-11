@@ -28,6 +28,7 @@ TZ = cfg('TZ_HORAS', -3)
 INICIO = cfg('INICIO', (2024, 11, 22))
 
 HORA_MS, CLIMA_MS, FECHAS_MS = 6 * 3600000, 15 * 60000, 30 * 60000
+TIMEOUT = 10          # segundos: si internet no contesta, se corta y reintenta más tarde (el robot nunca se cuelga)
 
 wlan = network.WLAN(network.STA_IF)
 clima = {'temp': None, 'code': 0, 'dia': 1}
@@ -45,7 +46,10 @@ def iniciar():
         wlan.config(txpower=cfg('WIFI_TXPOWER', 8.5))   # la C3 SuperMini conecta mejor con potencia baja
     except Exception:
         pass
-    _conectar(ticks())
+    if wlan.isconnected():                          # ya estaba conectado (ej. después de un Ctrl+D): no lo corto
+        _t['conn'] = ticks()
+    else:
+        _conectar(ticks())
 
 
 def _conectar(now):
@@ -155,7 +159,7 @@ def _clima(now):
     gc.collect()
     url =('http://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s'
            '&current=temperature_2m,weather_code,is_day') % (cfg('LAT', -34.86), cfg('LON', -57.91))
-    r = requests.get(url)
+    r = requests.get(url, timeout=TIMEOUT)
     try:
         c = r.json()['current']
     finally:
@@ -171,7 +175,7 @@ def _fechas(now):
     gc.collect()                                  # la conexión segura necesita un bloque de memoria grande
     h = {'apikey': SB_KEY, 'Content-Type': 'application/json'}
     r = requests.post(SB_URL + '/auth/v1/token?grant_type=password', headers=h,
-                      data=json.dumps({'email': SB_EMAIL, 'password': CLAVE}))
+                      data=json.dumps({'email': SB_EMAIL, 'password': CLAVE}), timeout=TIMEOUT)
     try:
         j = r.json()
     finally:
@@ -181,7 +185,7 @@ def _fechas(now):
     h['Authorization'] = 'Bearer ' + j['access_token']
     j = None
     gc.collect()
-    r = requests.get(SB_URL + '/rest/v1/fechas?select=nombre,fecha,anual', headers=h)
+    r = requests.get(SB_URL + '/rest/v1/fechas?select=nombre,fecha,anual', headers=h, timeout=TIMEOUT)
     try:
         data = r.json()
     finally:
