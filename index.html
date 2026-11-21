@@ -138,6 +138,14 @@ footer{text-align:center;margin-top:64px}
 .chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.75);border:0;border-radius:999px;padding:8px 16px;min-height:44px;text-align:left}
 .chip i{width:12px;height:12px;border-radius:50%;flex:none}
 .chip small{color:var(--soft)}
+.day.imp::after{content:"";position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:#d98b3a;box-shadow:0 0 0 1.5px #fff}
+.fl{display:flex;flex-direction:column;gap:8px;margin:4px 0 12px}
+.fi{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.75);border-radius:14px;padding:4px 4px 4px 14px}
+.fi > i{width:10px;height:10px;border-radius:50%;background:#d98b3a;flex:none}
+.fi .ft{flex:1 1 auto;display:flex;flex-direction:column;line-height:1.3;padding:6px 0}
+.fi small{color:var(--soft)}
+.fi .link{font-size:22px;width:44px}
+.fi.pasada{opacity:.55}
 
 /* ---- visor ---- */
 .lb{position:fixed;inset:0;z-index:30;background:rgba(8,28,22,.95);display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;
@@ -284,6 +292,19 @@ dialog .chk input{width:22px;height:22px;accent-color:var(--acc);flex:none}
   </form>
 </dialog>
 
+<dialog id="dlgF">
+  <form method="dialog">
+    <h3>Fecha importante</h3>
+    <label>¿Qué es?<input id="fNombre" required maxlength="60" placeholder="Ej: Examen de química"></label>
+    <label>¿Cuándo?<input id="fFecha" type="date" required></label>
+    <label class="chk"><input id="fAnual" type="checkbox"><span>Se repite todos los años (cumples, aniversarios)</span></label>
+    <div class="dlg-btns">
+      <button class="btn small" value="ok">Guardar</button>
+      <button class="link" value="cancel" formnovalidate>Cancelar</button>
+    </div>
+  </form>
+</dialog>
+
 <div id="toast" class="toast" role="status"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -304,7 +325,7 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
 const sb = supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_KEY);
 
-let albums = [], photos = [], urls = {}, view = { kind: 'inbox' }, sel = new Set(), lb = { list: [], i: 0 };
+let albums = [], photos = [], fechas = [], urls = {}, view = { kind: 'inbox' }, sel = new Set(), lb = { list: [], i: 0 };
 const hoy = new Date();
 let cal = { y: hoy.getFullYear(), m: hoy.getMonth() };
 let pick = null;   // null = normal · '' = esperando el primer día · 'AAAA-MM-DD' = esperando el último
@@ -410,12 +431,13 @@ $('#logout').addEventListener('click', async () => {
 
 // --- datos ---
 async function load() {
-  const [a, p] = await Promise.all([
+  const [a, p, f] = await Promise.all([
     sb.from('albums').select('*').order('created_at'),
     sb.from('photos').select('*').order('created_at', { ascending: false }),
+    sb.from('fechas').select('*'),
   ]);
   if (a.error || p.error) return toast('No pude cargar: ' + (a.error || p.error).message);
-  albums = a.data; photos = p.data;
+  albums = a.data; photos = p.data; fechas = f.error ? [] : f.data;
   const need = photos.map(x => x.path).filter(x => !urls[x]);
   if (need.length) {
     const { data } = await sb.storage.from(BUCKET).createSignedUrls(need, 60 * 60 * 24 * 7);
@@ -448,6 +470,22 @@ const mesNombre = ym => toDate(ym + '-01').toLocaleDateString('es-AR', { month: 
 const featOf = (y, m) => photos.filter(p => p.featured && monthOf(p) === `${y}-${pad(m + 1)}`)
   .sort((a, b) => (a.taken_on || '').localeCompare(b.taken_on || '') || a.created_at.localeCompare(b.created_at));
 
+// --- fechas importantes (cumples, exámenes…): las lee también el robotito ---
+const hoyStr = () => ymd(new Date());
+const fechaEn = (f, ds) => f.anual ? f.fecha.slice(5) === ds.slice(5) : f.fecha === ds;
+function proxima(f) {
+  const t = hoyStr();
+  if (!f.anual) return f.fecha;
+  const y = +t.slice(0, 4), md = f.fecha.slice(4);
+  return `${y}${md}` >= t ? `${y}${md}` : `${y + 1}${md}`;
+}
+const diasA = s => Math.round((toDate(s) - toDate(hoyStr())) / 864e5);
+const cuando = k => k < 0 ? 'ya pasó' : k === 0 ? '¡hoy!' : k === 1 ? 'mañana' : `en ${k} días`;
+function listaFechas() {
+  const l = fechas.map(f => { const next = proxima(f); return { ...f, next, k: diasA(next) }; });
+  return l.sort((a, b) => (a.k < 0) - (b.k < 0) || (a.k < 0 ? b.k - a.k : a.k - b.k));
+}
+
 function renderCal() {
   const days = byDay();
   const first = new Date(cal.y, cal.m, 1), off = (first.getDay() + 6) % 7, n = new Date(cal.y, cal.m + 1, 0).getDate();
@@ -468,9 +506,10 @@ function renderCal() {
   let cells = '<span class="day blank"></span>'.repeat(off);
   for (let d = 1; d <= n; d++) {
     const ds = `${cal.y}-${pad(cal.m + 1)}-${pad(d)}`, ps = days[ds], rs = dated.filter(a => inRange(ds, a));
-    const cls = (ps ? ' ph' : '') + (ds === today ? ' hoy' : '') + (pick && ds === pick ? ' pk' : '');
+    const fi = fechas.filter(f => fechaEn(f, ds));
+    const cls = (ps ? ' ph' : '') + (ds === today ? ' hoy' : '') + (pick && ds === pick ? ' pk' : '') + (fi.length ? ' imp' : '');
     const dot = ps ? `<span class="dot"><i style="--img:url('${esc(urls[ps[0].path] || '')}')"></i></span>` : '';
-    const label = fLong(ds) + (ps ? `, ${plural(ps.length, 'foto')}` : '') + rs.map(a => `, ${a.name}`).join('');
+    const label = fLong(ds) + (ps ? `, ${plural(ps.length, 'foto')}` : '') + rs.map(a => `, ${a.name}`).join('') + fi.map(f => `, ${f.nombre}`).join('');
     cells += `<button class="day${cls}" data-day="${ds}" aria-label="${esc(label)}"><span class="dn">${d}</span>${dot}${rs.length ? `<span class="rs">${rs.map(a => `<i style="background:${col(a.id)}"></i>`).join('')}</span>` : ''}</button>`;
   }
 
@@ -483,7 +522,24 @@ function renderCal() {
     <h3 class="sub">Fechas marcadas</h3>
     ${lista.length ? `<div class="chips">${lista.map(a => `<button class="chip" data-open="${a.id}"><i style="background:${col(a.id)}"></i><b>${esc(a.name)}</b><small>${rangeTxt(a)}</small></button>`).join('')}</div>`
       : `<p class="hint">Todavía no marcaste fechas. Tocá "+ Marcar fechas", elegí el primer y el último día (ej: las vacaciones) y se arma un álbum con las fotos de esos días.</p>`}
+    <h3 class="sub">Fechas importantes</h3>
+    <p class="hint">Cumples, exámenes o lo que quieras recordar. El robotito te avisa cuando falta poco.</p>
+    <div class="fl">${listaFechas().map(f => `
+      <div class="fi${f.k < 0 ? ' pasada' : ''}"><i aria-hidden="true"></i>
+        <span class="ft"><b>${esc(f.nombre)}</b><small>${cuando(f.k)} · ${fDay(f.next)}${f.anual ? ' · todos los años' : ''}</small></span>
+        <button class="link danger" data-delf="${f.id}" aria-label="Borrar ${esc(f.nombre)}">×</button></div>`).join('')}</div>
+    <button class="btn small" id="addFecha">+ Agregar fecha</button>
   </div>`;
+}
+
+function fechaDialog() {
+  return new Promise(res => {
+    const d = $('#dlgF');
+    $('#fNombre').value = ''; $('#fFecha').value = ''; $('#fAnual').checked = false;
+    d.returnValue = ''; d.showModal();
+    d.addEventListener('close', () => res(d.returnValue === 'ok'
+      ? { nombre: $('#fNombre').value.trim(), fecha: $('#fFecha').value, anual: $('#fAnual').checked } : null), { once: true });
+  });
 }
 
 function render() {
@@ -583,7 +639,7 @@ function go(kind, id) { view = { kind, id }; sel.clear(); pick = null; render();
 
 // --- clicks ---
 document.addEventListener('click', async e => {
-  const t = e.target.closest('[data-pick],[data-star],[data-lb],[data-open],[data-go],[data-day],[data-feat],[data-cal],#newAlbum,#editAlbum,#delAlbum,#pickStart,#pickCancel');
+  const t = e.target.closest('[data-pick],[data-star],[data-lb],[data-open],[data-go],[data-day],[data-feat],[data-cal],[data-delf],#newAlbum,#editAlbum,#delAlbum,#pickStart,#pickCancel,#addFecha');
   if (!t) return;
   if (t.dataset.pick) { const id = t.dataset.pick; sel.has(id) ? sel.delete(id) : sel.add(id); render(); }
   else if (t.dataset.star) { await toggleStar(photos.find(p => p.id === t.dataset.star)); render(); }
@@ -601,6 +657,20 @@ document.addEventListener('click', async e => {
       if (r) await createAlbum(r);
     } else if (byDay()[ds]) openDay(ds);
     else toast('Ese día no tiene fotos todavía');
+  }
+  else if (t.id === 'addFecha') {
+    const r = await fechaDialog();
+    if (!r || !r.nombre || !r.fecha) return;
+    const { data, error } = await sb.from('fechas').insert(r).select().single();
+    if (error) return toast(error.message);
+    fechas.push(data); render();
+    toast(`Anotado: ${r.nombre} ♥`);
+  } else if (t.dataset.delf) {
+    const f = fechas.find(x => x.id === t.dataset.delf);
+    if (!confirm(`¿Borrar "${f.nombre}"?`)) return;
+    const { error } = await sb.from('fechas').delete().eq('id', f.id);
+    if (error) return toast(error.message);
+    fechas = fechas.filter(x => x.id !== f.id); render();
   }
   else if (t.id === 'pickStart') { pick = ''; render(); }
   else if (t.id === 'pickCancel') { pick = null; render(); }
