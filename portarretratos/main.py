@@ -1,121 +1,44 @@
-# Regalito: ESP32-C3 SuperMini + OLED SSD1306 128x64 (I2C) + 1 pulsador
+# Robotito 22·11: ESP32-C3 SuperMini + OLED SSD1306 128x64 (I2C) + sensor táctil TTP223
 #
-# Pulsación corta -> siguiente pantalla: ojitos > mensajes > corazón > QR
-# Pulsación larga -> ojitos enamorados (desde cualquier pantalla)
+# Tocar una vez        -> pantalla siguiente: ojitos > hora y clima > QR > días juntos > próximas fechas > frase del día
+# Mantener (caricia)   -> vuelve a los ojitos y se pone feliz (^ ^) con corazoncitos
+# Mantener mucho       -> se derrite de amor (ojos de corazón)
+# Dos toques rápidos   -> (en los ojitos) se sorprende
+# Muchas caricias      -> se pone colorado
+# Sin tocarlo 30 s     -> vuelve solo a los ojitos
+# Sin tocarlo 20 min   -> se aburre y bosteza hasta que lo acaricien
+# De noche (0 a 7 hs)  -> duerme con el brillo bajo; si lo tocás se despierta un ratito con sueño
+# Si falta poco para una fecha importante, cada tanto lo avisa en la pantalla de los ojitos.
 #
-# Cableado:
-#   OLED VCC -> 3V3   GND -> GND   SDA -> GPIO6   SCL -> GPIO7
-#   Pulsador entre GPIO3 y GND (usa el pull-up interno)
-#   (Si querés probar sin cablear el botón, poné BTN = 9 y usá el BOOT de la placa)
+# Cableado (ver esquema.jpg):
+#   OLED  VCC -> 3V3   GND -> GND   SDA -> GPIO6   SCL -> GPIO7
+#   TTP223 VCC -> 3V3  GND -> GND   I/O -> GPIO3
+#
+# La configuración (Wi-Fi, clave del álbum, fechas, horarios) está en settings.py.
 
 from machine import Pin, I2C
 import ssd1306, time, random
+import dibujo as D
+from dibujo import put, center, wrap, heart, rrect, big
+import red as R
+from frases import FRASES
 
-SDA, SCL, BTN = 6, 7, 3
+cfg = R.cfg
 W, H = 128, 64
-LONG_MS = 700        # cuánto hay que mantener para la pulsación larga
-MSG_MS = 6000        # cada cuánto rota el mensaje
+HOLD_MS, LARGA_MS, DOBLE_MS = 600, 2500, 350
+VOLVER_MS = cfg('VOLVER_S', 30) * 1000
+ABURRIDO_MS = cfg('ABURRIDO_MIN', 20) * 60000
+AVISO_DIAS = cfg('AVISO_DIAS', 7)
+TEXTO_QR = ["Escaneá", "esto", "", "  <3"]     # el QR lleva a https://gaelrobador.github.io/22-11/
+DIAS = ('lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom')
 
-# Editá estos. Acentos y ñ andan (se dibujan a mano). Máx ~5 renglones de 16 letras.
-MENSAJES = [
-    "Sos lo más lindo que me pasó",
-    "Gracias por elegirme todos los días",
-    "Te quiero más que a un firmware que compila de una",
-    "Cada día con vos es mi favorito",
-    "Vale por un abrazo de oso. Canjeable siempre",
-    "Sos mi lugar seguro",
-]
-TEXTO_CORAZON = "te quiero"
-TEXTO_QR = ["Escaneá", "esto", "", "  <3"]   # el QR lleva a https://gaelrobador.github.io/22-11/
-
-i2c = I2C(0, sda=Pin(SDA), scl=Pin(SCL), freq=400000)
+i2c = I2C(0, sda=Pin(cfg('SDA', 6)), scl=Pin(cfg('SCL', 7)), freq=400000)
 oled = ssd1306.SSD1306_I2C(W, H, i2c)
-btn = Pin(BTN, Pin.IN, Pin.PULL_UP)
+D.init(oled)
+ACTIVO = cfg('TOUCH_ACTIVO', 1)
+touch = Pin(cfg('TOUCH', 3), Pin.IN, Pin.PULL_DOWN if ACTIVO else Pin.PULL_UP)
 
 ticks, diff, add = time.ticks_ms, time.ticks_diff, time.ticks_add
-
-
-# ---------- dibujo ----------
-def rrect(x, y, w, h, r, c=1):
-    r = min(r, w // 2, h // 2)
-    if r < 1:
-        oled.fill_rect(x, y, w, h, c)
-        return
-    oled.fill_rect(x, y + r, w, h - 2 * r, c)
-    for i in range(r):
-        dy = r - i - 0.5
-        dx = r - int((r * r - dy * dy) ** 0.5 + 0.5)
-        oled.hline(x + dx, y + i, w - 2 * dx, c)
-        oled.hline(x + dx, y + h - 1 - i, w - 2 * dx, c)
-
-
-def heart_spans(s):
-    out = []
-    for j in range(-s, s + 1):
-        v = -j * 1.3 / s + 0.12
-        start = None
-        for i in range(-s, s + 2):
-            u = i * 1.3 / s
-            inside = i <= s and (u * u + v * v - 1) ** 3 - u * u * v ** 3 <= 0
-            if inside and start is None:
-                start = i
-            elif not inside and start is not None:
-                out.append((j, start, i - 1))   # puede haber 2 tramos por fila (la muesca)
-                start = None
-    return out
-
-
-HEARTS = {s: heart_spans(s) for s in (5, 13, 15, 16, 19)}
-
-
-def heart(cx, cy, s, c=1):
-    for dy, x0, x1 in HEARTS[s]:
-        oled.hline(cx + x0, cy + dy, x1 - x0 + 1, c)
-
-
-ACENTOS = {"á": "a", "é": "e", "í": "i", "ó": "o", "ú": "u",
-           "Á": "A", "É": "E", "Í": "I", "Ó": "O", "Ú": "U"}
-
-
-def put(s, x, y):
-    # texto 8x8 con acentos y ñ dibujados a mano
-    for ch in s:
-        if ch in ACENTOS:
-            oled.text(ACENTOS[ch], x, y)
-            oled.pixel(x + 4, y, 1)
-            oled.pixel(x + 5, y, 1)
-        elif ch in "ñÑ":
-            oled.text("n" if ch == "ñ" else "N", x, y)
-            oled.hline(x + 1, y, 2, 1)
-            oled.hline(x + 3, y + 1, 2, 1)
-        elif ch in "¡¿":
-            pass
-        else:
-            oled.text(ch, x, y)
-        if ch not in "¡¿":
-            x += 8
-
-
-def wrap(t, n=16):
-    lines, cur = [], ""
-    for w in t.split():
-        if not cur:
-            cur = w
-        elif len(cur) + 1 + len(w) <= n:
-            cur += " " + w
-        else:
-            lines.append(cur)
-            cur = w
-    if cur:
-        lines.append(cur)
-    return lines
-
-
-def center(lines, y0, h, step=10):
-    y = y0 + (h - len(lines) * step) // 2 + 1
-    for l in lines:
-        put(l, (W - len(l) * 8) // 2, y)
-        y += step
 
 
 # ---------- ojitos ----------
@@ -129,14 +52,42 @@ class Ojos:
         self.next_blink = add(now, 1500)
         self.next_look = add(now, 1000)
         self.next_mood = add(now, 9000)
-        self.mood, self.mood_until = "normal", now
+        self.mood, self.until = 'normal', None
+        self.hearts, self.next_heart = [], now
+        self.caricias = []
+        self.yawn, self.next_yawn = None, add(now, 3000)
 
-    def set_mood(self, m, ms):
+    def set_mood(self, m, ms=None):
         self.mood = m
-        self.mood_until = add(ticks(), ms)
+        self.until = add(ticks(), ms) if ms else None
+
+    def caricia(self, now):
+        self.caricias = [t for t in self.caricias if diff(now, t) < 60000] + [now]
+        self.set_mood('caricia')
+
+    def fin_caricia(self, now):
+        if self.mood == 'love':
+            self.set_mood('love', 2500)
+        elif len(self.caricias) >= 4:
+            self.caricias = []
+            self.set_mood('rubor', 4000)
+        else:
+            self.set_mood('happy', 1800)
 
     def draw(self, now):
-        if diff(now, self.next_look) >= 0:
+        if self.until is not None and diff(now, self.until) >= 0:
+            self.mood, self.until = 'normal', None
+        if self.mood == 'normal' and diff(now, self.next_mood) >= 0:
+            self.set_mood(random.choice(('happy', 'happy', 'sleepy', 'love')), 2200)
+            self.next_mood = add(now, random.randint(8000, 16000))
+        m = self.mood
+
+        # hacia dónde mira
+        if m == 'aburrido':
+            self.tx, self.ty = 0, 7
+        elif m in ('dormido', 'caricia', 'rubor'):
+            self.tx = self.ty = 0
+        elif diff(now, self.next_look) >= 0:
             if random.random() < 0.35:
                 self.tx = self.ty = 0
             else:
@@ -145,82 +96,158 @@ class Ojos:
         self.lx += (self.tx - self.lx) * 0.35
         self.ly += (self.ty - self.ly) * 0.35
 
+        # parpadeo
         k = 1.0
-        if self.blink is None and diff(now, self.next_blink) >= 0:
-            self.blink = now
-        if self.blink is not None:
-            d = diff(now, self.blink)
-            if d >= 160:
-                self.blink = None
-                if not self.double and random.random() < 0.25:
-                    self.double, self.next_blink = True, add(now, 120)
+        if m in ('normal', 'happy', 'sleepy', 'sorpresa', 'aburrido'):
+            if self.blink is None and diff(now, self.next_blink) >= 0:
+                self.blink = now
+            if self.blink is not None:
+                d = diff(now, self.blink)
+                if d >= 160:
+                    self.blink = None
+                    if not self.double and random.random() < 0.25:
+                        self.double, self.next_blink = True, add(now, 120)
+                    else:
+                        self.double = False
+                        self.next_blink = add(now, random.randint(1800, 5000))
                 else:
-                    self.double = False
-                    self.next_blink = add(now, random.randint(1800, 5000))
-            else:
-                k = max(abs(d - 80) / 80, 0.06)
+                    k = max(abs(d - 80) / 80, 0.06)
 
-        if self.mood != "normal" and diff(now, self.mood_until) >= 0:
-            self.mood = "normal"
-        if diff(now, self.next_mood) >= 0:
-            self.set_mood(random.choice(("happy", "happy", "sleepy", "love")), 2200)
-            self.next_mood = add(now, random.randint(8000, 16000))
+        # bostezo cuando está aburrido
+        if m == 'aburrido':
+            if self.yawn is None and diff(now, self.next_yawn) >= 0:
+                self.yawn = now
+            if self.yawn is not None:
+                if diff(now, self.yawn) > 1400:
+                    self.yawn, self.next_yawn = None, add(now, random.randint(6000, 12000))
+                else:
+                    k = 0.12
+
+        # corazoncitos que suben mientras lo acarician
+        if m in ('caricia', 'love') and diff(now, self.next_heart) >= 0:
+            self.hearts.append([random.randint(6, 122), 68.0, random.choice((3, 5))])
+            self.next_heart = add(now, 160 if m == 'love' else 320)
 
         oled.fill(0)
         ox, oy = int(self.lx), int(self.ly)
-        if self.mood == "love":
-            s = 16 if (now // 300) % 2 else 13
-            heart(36 + ox, 32 + oy, s)
-            heart(92 + ox, 32 + oy, s)
-        else:
-            for cx in (36, 92):
+        for cx in (36, 92):
+            x = cx + ox
+            if m == 'love':
+                heart(x, 32 + oy, 16 if (now // 300) % 2 else 13)
+            elif m in ('caricia', 'rubor'):            # ojitos cerrados de felicidad: ^ ^
+                b = (now // 250) % 2
+                rrect(x - 18, 20 - b, 36, 24, 12)
+                rrect(x - 13, 27 - b, 26, 24, 9, 0)
+                if m == 'rubor':
+                    for i in range(3):
+                        oled.line(x - 11 + i * 7, 55, x - 7 + i * 7, 49, 1)
+            elif m == 'dormido':
+                rrect(x - 16, 34, 32, 10, 5)
+                rrect(x - 16, 30, 32, 10, 5, 0)
+            elif m == 'sorpresa':
+                rrect(x - 22, 8 + oy, 44, 48, 22)
+            else:
                 w, h = 36, max(2, int(40 * k))
-                x, y = cx - w // 2 + ox, 32 - h // 2 + oy
-                rrect(x, y, w, h, 10)
-                if self.mood == "happy" and h > 10:
-                    rrect(x - 3, y + h * 55 // 100, w + 6, h, 14, 0)
-                elif self.mood == "sleepy":
-                    oled.fill_rect(x - 1, y - 1, w + 2, h // 2 + 1, 0)
+                ex, ey = x - w // 2, 32 - h // 2 + oy
+                rrect(ex, ey, w, h, 10)
+                if m == 'happy' and h > 10:
+                    rrect(ex - 3, ey + h * 55 // 100, w + 6, h, 14, 0)
+                elif m == 'sleepy':
+                    oled.fill_rect(ex - 1, ey - 1, w + 2, h // 2 + 1, 0)
+                elif m == 'aburrido':
+                    oled.fill_rect(ex - 1, ey - 1, w + 2, h * 45 // 100 + 1, 0)
+        if m == 'dormido':
+            for i in range(3):
+                f = (now // 90 + i * 25) % 75
+                put('z' if i % 2 else 'Z', 100 + f // 6, 28 - f // 3)
+        for p in self.hearts:
+            p[1] -= 0.9
+            heart(p[0], int(p[1]), p[2])
+        self.hearts = [p for p in self.hearts if p[1] > -8]
         oled.show()
 
 
-# ---------- pantallas ----------
 ojos = Ojos()
-msg_i = 0
-msg_t = ticks()
+
+
+# ---------- pantallas ----------
 dirty = True
+t_draw = 0
+
+
+def redibujar(now, ms):
+    global dirty, t_draw
+    if dirty or diff(now, t_draw) >= ms:
+        dirty, t_draw = False, now
+        return True
+    return False
+
+
+def sin_hora(titulo):
+    if not R.configurado():
+        center([titulo, '', 'Configurá el', 'Wi-Fi en', 'settings.py'], 0, H)
+    else:
+        center([titulo, '', 'Necesito la hora', '(conectando...)'], 0, H)
+
+
+aviso_t, aviso_hasta = add(ticks(), -35000), ticks()
+
+
+def aviso(now):
+    # cada 45 s, si falta poco para una fecha importante, la muestra unos segundos
+    global aviso_t, aviso_hasta
+    if ojos.mood in ('dormido', 'caricia', 'love', 'rubor'):
+        return False
+    if diff(now, aviso_hasta) < 0:
+        return True
+    if diff(now, aviso_t) < 45000:
+        return False
+    aviso_t = now
+    ev = R.proximas(1)
+    if not ev or ev[0][0] > AVISO_DIAS:
+        return False
+    k, nombre = ev[0]
+    oled.fill(0)
+    heart(64, 6, 5)
+    t = '¡HOY!' if k == 0 else '¡Mañana!' if k == 1 else 'Faltan %d días' % k
+    center([t, ''] + wrap(nombre)[:3], 13, 51)
+    oled.show()
+    aviso_hasta = add(now, 4000)
+    return True
 
 
 def pant_ojos(now):
-    ojos.draw(now)
+    if not aviso(now):
+        ojos.draw(now)
 
 
-def pant_mensajes(now):
-    global msg_i, msg_t, dirty
-    if diff(now, msg_t) >= MSG_MS:
-        msg_i = (msg_i + 1) % len(MENSAJES)
-        msg_t, dirty = now, True
-    if not dirty:
+def pant_hora(now):
+    if not redibujar(now, 500):
         return
     oled.fill(0)
-    heart(64, 6, 5)
-    center(wrap(MENSAJES[msg_i]), 13, 51)
-    oled.show()
-    dirty = False
-
-
-def pant_corazon(now):
-    oled.fill(0)
-    f = (now // 120) % 8
-    s = 19 if f in (0, 2) else 15        # latido doble: pum-pum ... pausa
-    heart(64, 26, s)
-    put(TEXTO_CORAZON, (W - len(TEXTO_CORAZON) * 8) // 2, 55)
+    D.wifi(0, 0, R.nivel())
+    if R.hora_ok():
+        y, mo, d, hh, mi, ss, wd = R.ahora()[:7]
+        s = '%s %d/%d' % (DIAS[wd], d, mo)
+        put(s, W - D.ancho(s), 2)
+        big('%02d%s%02d' % (hh, ':' if ss % 2 else ' ', mi), 4, 17, 3)
+    elif not R.configurado():
+        center(['Configurá el', 'Wi-Fi en', 'settings.py'], 12, 36)
+    else:
+        center(['Sin Wi-Fi' if R.nivel() < 0 else 'Buscando hora'], 14, 28)
+    c = R.clima
+    if c['temp'] is not None:
+        D.clima(2, 46, c['code'], c['dia'])
+        t = '%d' % round(c['temp'])
+        x = 24 + D.ancho(t)
+        put(t, 24, 51)
+        D.grado(x + 1, 51)
+        put('C ' + cfg('CIUDAD', 'Ensenada'), x + 5, 51)
     oled.show()
 
 
 def pant_qr(now):
-    global dirty
-    if not dirty:
+    if not redibujar(now, 600000):
         return
     oled.fill(0)
     try:
@@ -228,7 +255,6 @@ def pant_qr(now):
     except ImportError:
         center(["Falta", "qr_data.py"], 0, H)
         oled.show()
-        dirty = False
         return
     sc = max(1, H // (SIZE + 2))
     side = (SIZE + 2) * sc
@@ -241,53 +267,181 @@ def pant_qr(now):
     tx = side + 4
     y = (H - len(TEXTO_QR) * 10) // 2
     for l in TEXTO_QR:
-        put(l, tx + (W - tx - len(l) * 8) // 2, y)
+        put(l, tx + (W - tx - D.ancho(l)) // 2, y)
         y += 10
     oled.show()
-    dirty = False
 
 
-PANTALLAS = (pant_ojos, pant_mensajes, pant_corazon, pant_qr)
-modo = 0
+def pant_juntos(now):
+    if not redibujar(now, 60000):
+        return
+    oled.fill(0)
+    if not R.hora_ok():
+        sin_hora('Juntos hace...')
+    else:
+        y, m, d = R.ahora()[:3]
+        sy, sm, sd = R.INICIO
+        hoy = R.dnum(y, m, d)
+        dias = hoy - R.dnum(sy, sm, sd)
+        anios = y - sy - (1 if (m, d) < (sm, sd) else 0)
+        resto = hoy - R.dnum(sy + anios, sm, sd)
+        put('Juntos hace', (W - 88) // 2, 0)
+        s = str(dias)
+        big(s, (W - len(s) * 24) // 2, 11, 3)
+        put('días ♥', (W - 48) // 2, 38)
+        a = 'año' if anios == 1 else 'años'
+        t = ('¡Hoy son %d %s!' % (anios, a)) if resto == 0 and anios else '%d %s y %dd' % (anios, a, resto)
+        put(t, (W - D.ancho(t)) // 2, 54)
+    oled.show()
 
 
-# ---------- botón ----------
-class Boton:
-    def __init__(self, pin):
-        self.pin, self.t0, self.fired = pin, None, False
+def pant_prox(now):
+    if not redibujar(now, 60000):
+        return
+    oled.fill(0)
+    ev = R.proximas(3)
+    if not R.hora_ok():
+        sin_hora('Próximas fechas')
+    elif not ev:
+        center(['Próximas fechas', '', 'No hay ninguna'], 0, H)
+    else:
+        k, nombre = ev[0]
+        nombre = D.recortar(nombre)
+        put(nombre, (W - D.ancho(nombre)) // 2, 0)
+        if k == 0:
+            big('HOY', (W - 72) // 2, 12, 3)
+        else:
+            s, u = str(k), 'día' if k == 1 else 'días'
+            x = (W - (len(s) * 24 + 4 + D.ancho(u))) // 2
+            big(s, x, 12, 3)
+            put(u, x + len(s) * 24 + 4, 28)
+        y = 42
+        for k2, n2 in ev[1:]:
+            put(D.recortar(('hoy ' if k2 == 0 else '%dd ' % k2) + n2), 0, y)
+            y += 11
+    oled.show()
+
+
+def pant_frase(now):
+    if not redibujar(now, 60000):
+        return
+    i = R.hoy() % len(FRASES) if R.hora_ok() else 0
+    oled.fill(0)
+    heart(64, 6, 5)
+    center(wrap(FRASES[i])[:5], 13, 51)
+    oled.show()
+
+
+PANTALLAS = (pant_ojos, pant_hora, pant_qr, pant_juntos, pant_prox, pant_frase)
+
+
+# ---------- sensor táctil ----------
+class Touch:
+    # Eventos: 'tap', 'double', 'hold' (empezó la caricia), 'hold_long', 'release' (terminó la caricia)
+    def __init__(self, pin, activo):
+        self.pin, self.on = pin, activo
+        self.t0, self.hold, self.larga = None, False, False
+        self.tap_t, self.doble, self.down = None, True, False
 
     def poll(self, now):
-        down = self.pin.value() == 0
-        if down and self.t0 is None:
-            self.t0, self.fired = now, False
-        elif down and not self.fired and diff(now, self.t0) >= LONG_MS:
-            self.fired = True
-            return "long"
-        elif not down and self.t0 is not None:
-            short = not self.fired and diff(now, self.t0) >= 30
-            self.t0 = None
-            if short:
-                return "short"
+        self.down = self.pin.value() == self.on
+        if self.down:
+            if self.t0 is None:
+                self.t0, self.hold, self.larga = now, False, False
+            d = diff(now, self.t0)
+            if not self.hold and d >= HOLD_MS:
+                self.hold, self.tap_t = True, None
+                return 'hold'
+            if self.hold and not self.larga and d >= LARGA_MS:
+                self.larga = True
+                return 'hold_long'
+            return None
+        if self.t0 is not None:
+            d, hold, self.t0 = diff(now, self.t0), self.hold, None
+            if hold:
+                return 'release'
+            if d < 25:
+                return None
+            if not self.doble:
+                return 'tap'
+            if self.tap_t is not None and diff(now, self.tap_t) <= DOBLE_MS:
+                self.tap_t = None
+                return 'double'
+            self.tap_t = now
+            return None
+        if self.tap_t is not None and diff(now, self.tap_t) > DOBLE_MS:
+            self.tap_t = None
+            return 'tap'
         return None
 
 
+# ---------- loop ----------
+modo = 0
+brillo = None
+
+
+def set_brillo(v):
+    global brillo
+    if v != brillo:
+        brillo = v
+        oled.contrast(v)
+
+
 def main():
-    global modo, dirty, msg_t
-    b = Boton(btn)
+    global modo, dirty
+    oled.fill(0)
+    center(['Hola ♥'], 0, H)
+    oled.show()
+    R.iniciar()
+    t = Touch(touch, ACTIVO)
+    last_touch = despierto = ticks()
     while True:
         now = ticks()
-        ev = b.poll(now)
-        if ev == "short":
-            modo = (modo + 1) % len(PANTALLAS)
-            dirty, msg_t = True, now
+        t.doble = modo == 0           # el doble toque solo se usa en los ojitos (en las otras pantallas responde al toque)
+        ev = t.poll(now)
+        dormido = R.es_noche() and diff(now, despierto) >= 0
+        if ev or t.down:
+            last_touch = now
+        if ev and dormido:            # lo despertaron: se queda un rato con sueño
+            despierto = add(now, 20000)
+            ojos.set_mood('sleepy', 20000)
+            modo, dirty, ev = 0, True, None
+        elif ev and ojos.mood == 'aburrido':
+            ojos.set_mood('happy', 2000)
+
+        if ev == 'tap':
+            modo, dirty = (modo + 1) % len(PANTALLAS), True
             if modo == 0:
-                ojos.set_mood("happy", 1200)   # se pone contento cuando vuelve
-        elif ev == "long":
+                ojos.set_mood('happy', 1200)
+        elif ev == 'double':
+            ojos.set_mood('sorpresa', 1500)
+        elif ev == 'hold':
             modo, dirty = 0, True
-            ojos.set_mood("love", 3500)
+            ojos.caricia(now)
+        elif ev == 'hold_long':
+            ojos.set_mood('love')
+        elif ev == 'release':
+            ojos.fin_caricia(now)
+
+        if R.es_noche() and diff(now, despierto) >= 0:
+            modo = 0
+            if ojos.mood != 'dormido':
+                ojos.set_mood('dormido')
+            set_brillo(cfg('NOCHE_BRILLO', 1))
+        else:
+            if ojos.mood == 'dormido':
+                ojos.set_mood('happy', 1500)          # buen día
+            set_brillo(255)
+            if modo and diff(now, last_touch) > VOLVER_MS:
+                modo, dirty = 0, True
+            if modo == 0 and ojos.mood == 'normal' and diff(now, last_touch) > ABURRIDO_MS:
+                ojos.set_mood('aburrido')
+
         PANTALLAS[modo](now)
+        if not t.down:
+            R.tarea(now)
         time.sleep_ms(25)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

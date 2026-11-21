@@ -1,2 +1,5 @@
 __pycache__/
 *.pyc
+# tiene contraseñas: no se sube
+settings.py
+fechas.json

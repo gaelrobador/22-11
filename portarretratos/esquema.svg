@@ -55,16 +55,26 @@
   </g>
   <text x="1170" y="512" text-anchor="middle" font-size="18" font-weight="700" fill="#1f4e8c">OLED SSD1306 128x64 (I2C)</text>
 
-  <!-- ===== Pulsador ===== -->
-  <rect x="290" y="300" width="80" height="90" rx="8" fill="#2b2b2b" stroke="#111" stroke-width="2"/>
-  <circle cx="330" cy="345" r="24" fill="#d94f4f" stroke="#7a1f1f" stroke-width="2"/>
-  <text x="330" y="430" text-anchor="middle" font-size="18" font-weight="700" fill="#333" dy="40">Pulsador</text>
+  <!-- ===== Sensor táctil TTP223 ===== -->
+  <rect x="230" y="235" width="140" height="215" rx="10" fill="#c0392b" stroke="#7b1d14" stroke-width="3"/>
+  <circle cx="290" cy="352" r="40" fill="#f4d9d4" stroke="#7b1d14" stroke-width="2"/>
+  <circle cx="290" cy="352" r="26" fill="none" stroke="#c0392b" stroke-width="2" stroke-dasharray="4 4"/>
+  <text x="290" y="358" text-anchor="middle" font-size="13" font-weight="700" fill="#7b1d14">tocar</text>
+  <g font-size="14" font-weight="700" fill="#fff" text-anchor="end">
+    <text x="362" y="275">GND</text>
+    <text x="362" y="325">VCC</text>
+    <text x="362" y="425">I/O</text>
+  </g>
+  <g fill="#e8c547" stroke="#8a6d00" stroke-width="1.5">
+    <circle cx="370" cy="270" r="7"/><circle cx="370" cy="320" r="7"/><circle cx="370" cy="420" r="7"/>
+  </g>
+  <text x="300" y="480" text-anchor="middle" font-size="18" font-weight="700" fill="#7b1d14">Sensor táctil TTP223</text>
 
   <!-- ===== cables (borde blanco para que se vea cuál pasa por arriba) ===== -->
   <g fill="none" stroke-linejoin="round" stroke-linecap="round">
-    <!-- GND -> pulsador -->
-    <path d="M530 270 H330 V300" stroke="#fff" stroke-width="11"/>
-    <path d="M530 270 H330 V300" stroke="#222" stroke-width="6"/>
+    <!-- GND -> TTP223 -->
+    <path d="M530 270 H370" stroke="#fff" stroke-width="11"/>
+    <path d="M530 270 H370" stroke="#222" stroke-width="6"/>
     <!-- 3V3 -> VCC OLED (rojo) -->
     <path d="M560 320 H510 V80 H990 V330 H1020" stroke="#fff" stroke-width="11"/>
     <path d="M560 320 H510 V80 H990 V330 H1020" stroke="#d62828" stroke-width="6"/>
@@ -77,11 +87,15 @@
     <!-- GPIO6 -> SDA (azul) -->
     <path d="M760 270 H860 V410 H1020" stroke="#fff" stroke-width="11"/>
     <path d="M760 270 H860 V410 H1020" stroke="#1e88e5" stroke-width="6"/>
-    <!-- GPIO3 -> pulsador (verde) -->
-    <path d="M560 420 H330 V390" stroke="#fff" stroke-width="11"/>
-    <path d="M560 420 H330 V390" stroke="#2e9e4f" stroke-width="6"/>
+    <!-- 3V3 -> VCC TTP223 (rojo) -->
+    <path d="M510 320 H370" stroke="#fff" stroke-width="11"/>
+    <path d="M510 320 H370" stroke="#d62828" stroke-width="6"/>
+    <!-- GPIO3 -> I/O TTP223 (verde) -->
+    <path d="M560 420 H370" stroke="#fff" stroke-width="11"/>
+    <path d="M560 420 H370" stroke="#2e9e4f" stroke-width="6"/>
   </g>
   <circle cx="530" cy="270" r="7" fill="#222"/>
+  <circle cx="510" cy="320" r="7" fill="#d62828"/>
 
   <!-- etiquetas de cables -->
   <g font-size="14" font-weight="700">
@@ -90,6 +104,7 @@
     <text x="870" y="262" fill="#1e88e5">SDA</text>
     <text x="910" y="312" fill="#b38600">SCL</text>
     <text x="400" y="262" fill="#222">GND</text>
+    <text x="400" y="312" fill="#d62828">3V3</text>
     <text x="400" y="412" fill="#2e9e4f">GPIO3</text>
   </g>
 
@@ -101,14 +116,16 @@
     <circle cx="98" cy="821" r="7" fill="#222"/><text x="114" y="827">OLED GND → GND</text>
     <circle cx="98" cy="853" r="7" fill="#1e88e5"/><text x="114" y="859">OLED SDA → GPIO6</text>
     <circle cx="98" cy="885" r="7" fill="#e0a800"/><text x="114" y="891">OLED SCL → GPIO7</text>
-    <circle cx="398" cy="789" r="7" fill="#2e9e4f"/><text x="414" y="795">Pulsador, una pata → GPIO3</text>
-    <circle cx="398" cy="821" r="7" fill="#222"/><text x="414" y="827">Pulsador, otra pata → GND</text>
+    <circle cx="398" cy="789" r="7" fill="#d62828"/><text x="414" y="795">TTP223 VCC → 3V3</text>
+    <circle cx="398" cy="821" r="7" fill="#222"/><text x="414" y="827">TTP223 GND → GND</text>
+    <circle cx="398" cy="853" r="7" fill="#2e9e4f"/><text x="414" y="859">TTP223 I/O → GPIO3</text>
   </g>
   <g font-size="15" fill="#4d6f66">
-    <text x="760" y="790">• El pulsador no lleva resistencia (usa el pull-up interno).</text>
-    <text x="760" y="818">• Sin pulsador: poné BTN = 9 en main.py y usá el botón BOOT.</text>
-    <text x="760" y="846">• El orden de los pines del OLED cambia según el módulo</text>
-    <text x="774" y="868">(GND-VCC o VCC-GND): guiate por lo que dice impreso.</text>
-    <text x="760" y="896">• Pulsador de 4 patas: usá dos en diagonal.</text>
+    <text x="700" y="790">• El TTP223 no lleva resistencia. No lo toques al enchufar el USB:</text>
+    <text x="714" y="810">se calibra al arrancar.</text>
+    <text x="700" y="836">• Detecta a través de una tapa fina (plástico o madera de ~2 mm).</text>
+    <text x="700" y="862">• El orden de los pines del OLED y del TTP223 cambia según el módulo:</text>
+    <text x="714" y="882">guiate por lo que dice impreso en cada uno.</text>
+    <text x="700" y="908">• Si responde al revés (tocás y no pasa nada): TOUCH_ACTIVO = 0.</text>
   </g>
 </svg>
