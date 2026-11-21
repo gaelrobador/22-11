@@ -24,7 +24,7 @@ button{cursor:pointer}
 .lobby{position:relative;min-height:100svh;display:grid;place-items:center;text-align:center;padding:56px 20px;
   background:radial-gradient(70% 55% at 50% 45%,rgba(255,255,255,.55),transparent 75%);overflow:hidden}
 .lobby-fotos{position:absolute;inset:0;z-index:0}
-.lobby-fotos img{position:absolute;width:clamp(110px,26vw,230px);aspect-ratio:4/5;object-fit:cover;background:#fff;
+.lobby-fotos img{position:absolute;aspect-ratio:4/5;object-fit:cover;background:#fff;
   border:7px solid #fff;border-bottom-width:24px;border-radius:3px;box-shadow:0 10px 28px rgba(18,58,48,.22);transform:rotate(var(--r));opacity:.95}
 .lobby-in{position:relative;z-index:1;max-width:560px;width:100%}
 .lobby.con-fotos .lobby-in{background:rgba(255,255,255,.6);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-radius:24px;padding:28px 20px;
@@ -69,7 +69,11 @@ button{cursor:pointer}
 .polaroid.sel{outline:3px solid var(--acc);transform:rotate(0)}
 .polaroid img{display:block;width:100%;aspect-ratio:1;object-fit:cover;background:var(--acc2);cursor:zoom-in}
 .polaroid figcaption{font-family:var(--hand);font-size:19px;line-height:1.15;text-align:center;min-height:28px;padding:5px 2px 0;overflow-wrap:anywhere}
-.polaroid time{display:block;text-align:center;font-size:12px;color:var(--soft);padding-bottom:2px}
+.pf{display:flex;align-items:center;justify-content:space-between;gap:4px;min-height:32px}
+.pf time{font-size:12px;color:var(--soft);padding-left:2px}
+.star{position:relative;background:none;border:0;padding:0 4px;font-size:22px;line-height:1;color:#c9d6d1;margin-left:auto;min-width:32px;min-height:32px}
+.star::before{content:"";position:absolute;inset:-6px}
+.star.on{color:#e0a92e}
 .pick{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;border:2px solid #fff;
   background:rgba(18,58,48,.35);color:#fff;font-weight:700;display:grid;place-items:center;padding:0}
 .pick::before{content:"";position:absolute;inset:-6px}
@@ -101,6 +105,9 @@ footer{text-align:center;margin-top:64px}
 
 /* ---- calendario ---- */
 .cal-wrap{max-width:640px;margin:0 auto}
+.feat{background:rgba(255,255,255,.55);border-radius:16px;padding:10px 12px 2px;margin-bottom:12px}
+.feat h3{font-family:var(--hand);font-weight:400;font-size:22px;margin:0}
+.feat .hint{margin:4px 0 10px;font-size:14px}
 .stories{display:flex;gap:12px;overflow-x:auto;padding:8px 2px 14px;scrollbar-width:none}
 .stories::-webkit-scrollbar{display:none}
 .story{background:none;border:0;padding:0;display:flex;flex-direction:column;align-items:center;gap:4px;flex:none}
@@ -116,15 +123,15 @@ footer{text-align:center;margin-top:64px}
 .cal-head .link{font-size:30px;width:48px;line-height:1}
 .wk,.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
 .wk span{text-align:center;font-weight:700;color:var(--soft);font-size:13px;padding-bottom:2px}
-.day{position:relative;aspect-ratio:1;border:0;border-radius:12px;background:rgba(255,255,255,.65);padding:5px;display:flex;flex-direction:column;
-  justify-content:space-between;align-items:flex-start;overflow:hidden;min-height:44px}
+.day{position:relative;aspect-ratio:1;border:0;border-radius:12px;background:rgba(255,255,255,.65);padding:4px;display:flex;flex-direction:column;
+  align-items:center;overflow:hidden;min-height:44px}
 .day.blank{background:none}
-.day .dn{font-weight:700;font-size:14px;line-height:1}
-.day.ph{background:var(--img) center/cover,var(--acc2);box-shadow:inset 0 0 0 3px var(--acc)}
-.day.ph .dn{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+.day .dn{align-self:flex-start;font-weight:700;font-size:13px;line-height:1}
+.day .dot{width:64%;aspect-ratio:1;margin:auto 0;border-radius:50%;padding:2px;background:linear-gradient(135deg,var(--accb),var(--acc))}
+.day .dot i{display:block;width:100%;height:100%;border-radius:50%;border:1.5px solid #fff;background:var(--img) center/cover,var(--acc2)}
 .day.hoy{outline:2px solid var(--accb);outline-offset:-2px}
-.day.pk{background:var(--accb);color:#fff;box-shadow:none}
-.day .rs{display:flex;flex-direction:column;gap:2px;width:100%}
+.day.pk{background:var(--accb);color:#fff}
+.day .rs{position:absolute;left:4px;right:4px;bottom:3px;display:flex;flex-direction:column;gap:2px}
 .day .rs i{display:block;height:5px;border-radius:3px;box-shadow:0 0 0 1px rgba(255,255,255,.8)}
 .sub{font-family:var(--hand);font-weight:400;font-size:26px;margin:26px 0 8px}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
@@ -192,7 +199,8 @@ dialog .chk input{width:22px;height:22px;accent-color:var(--acc);flex:none}
     <p class="msg">
       Este rincón es nuestro. Lo hice para que guardemos las fotitos de todo lo que vamos viviendo:
       los viajes, las salidas y también las pavadas de todos los días. Subí todas las que quieras,
-      armá los álbumes como más te guste y ponele play a la música mientras tanto. Te quiero.
+      armá los álbumes como más te guste, anotá los días especiales con sus momentos especiales
+      y escuchá nuestra playlist mientras tanto. Te amo chanchurra.
     </p>
     <div id="spotify" class="spotify"></div>
     <a class="btn" href="#album">Entrar ♥</a>
@@ -240,6 +248,7 @@ dialog .chk input{width:22px;height:22px;accent-color:var(--acc);flex:none}
   <div class="lb-foot">
     <div class="lb-row">
       <input id="lbDate" type="date" aria-label="Fecha de la foto">
+      <button id="lbStar" type="button"></button>
       <button id="lbFondo" type="button"></button>
     </div>
     <textarea id="lbCap" rows="1" placeholder="Escribile algo a esta foto…"></textarea>
@@ -329,15 +338,47 @@ $('.hearts').innerHTML = Array.from({ length: 14 }, (_, i) =>
   `<span style="left:${(i * 7.3 + 3) % 100}%;font-size:${14 + (i * 13) % 26}px;animation-duration:${12 + (i * 5) % 11}s;animation-delay:-${(i * 3.7) % 14}s">♥</span>`).join('');
 
 // --- fotos de fondo del lobby (solo con la sesión abierta: las fotos son privadas) ---
-const SLOTS = ['left:-4%;top:3%', 'right:-5%;top:6%', 'left:2%;bottom:4%', 'right:1%;bottom:2%',
-  'left:33%;top:-3%', 'right:30%;bottom:-4%', 'left:-8%;top:42%', 'right:-9%;top:46%'];
-function renderLobby() {
+// Cada vez que se abre la página se eligen fotos al azar (primero las marcadas "en el inicio")
+// y se reparten en los costados del mensaje, llenando el espacio libre.
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const jit = r => (Math.random() * 2 - 1) * r;
+let lobbyMix = null;   // orden al azar de las fotos y de los lugares; se rearma en cada carga
+function renderLobby(reshuffle) {
+  const box = $('#lobbyFotos'), lob = $('.lobby');
   const ok = photos.filter(p => urls[p.path]);
-  const marked = ok.filter(p => p.lobby);
-  const list = (marked.length ? marked : ok).slice(0, SLOTS.length);
-  $('#lobbyFotos').innerHTML = list.map((p, i) => `<img src="${esc(urls[p.path])}" alt="" style="${SLOTS[i]};--r:${rot(p.id) * 2.5}deg">`).join('');
-  $('.lobby').classList.toggle('con-fotos', list.length > 0);
+  if (!ok.length) { box.innerHTML = ''; lob.classList.remove('con-fotos'); lobbyMix = null; return; }
+  if (reshuffle || !lobbyMix) {
+    const pool = [...shuffle(ok.filter(p => p.lobby)), ...shuffle(ok.filter(p => !p.lobby))];
+    lobbyMix = { ids: pool.map(p => p.id), seed: Array.from({ length: 40 }, () => [Math.random(), jit(1), jit(1), jit(8)]) };
+  }
+  const W = lob.clientWidth, H = lob.clientHeight, side = (W - Math.min(600, W - 40)) / 2;
+  let slots = [], size;
+  if (side >= 150) {
+    // compu: columnas de fotos a cada lado del mensaje
+    const cols = Math.min(2, Math.max(1, Math.floor(side / 220))), rows = Math.max(2, Math.floor(H / 300));
+    const cw = side / cols, rh = H / rows;
+    size = Math.min(240, cw - 24, (rh - 16) / 1.35);
+    const slack = Math.max(0, Math.min(cw - size, rh - size * 1.3) / 2 - 6);
+    for (const left of [true, false]) for (let c = 0; c < cols; c++) for (let r = 0; r < rows; r++)
+      slots.push([left ? c * cw + cw / 2 : W - side + c * cw + cw / 2, r * rh + rh / 2, slack]);
+  } else {
+    // celu: el mensaje ocupa casi todo, las fotos asoman arriba, abajo y a los costados
+    size = Math.min(170, W * 0.36);
+    const h = size * 1.3;
+    slots = [[W * .2, h * .45], [W * .8, h * .55], [W * .5, h * .2], [W * .18, H - h * .5], [W * .82, H - h * .45], [W * .5, H - h * .25],
+      [W * .06, H * .45], [W * .94, H * .5]].map(([x, y]) => [x, y, 10]);
+  }
+  const order = slots.map((s, i) => [s, lobbyMix.seed[i % 40]]).sort((a, b) => a[1][0] - b[1][0]);
+  const byId = Object.fromEntries(ok.map(p => [p.id, p]));
+  const list = lobbyMix.ids.map(id => byId[id]).filter(Boolean).slice(0, slots.length);
+  box.innerHTML = list.map((p, i) => {
+    const [[x, y, sl], [, jx, jy, r]] = order[i];
+    return `<img src="${esc(urls[p.path])}" alt="" style="width:${size | 0}px;left:${(x - size / 2 + jx * sl) | 0}px;top:${(y - size * 0.65 + jy * sl) | 0}px;--r:${r.toFixed(1)}deg">`;
+  }).join('');
+  lob.classList.add('con-fotos');
 }
+let rz;
+addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => renderLobby(), 200); });
 
 let tt;
 function toast(msg, sticky) {
@@ -378,7 +419,7 @@ async function load() {
     const { data } = await sb.storage.from(BUCKET).createSignedUrls(need, 60 * 60 * 24 * 7);
     (data || []).forEach(d => { if (d.signedUrl) urls[d.path] = d.signedUrl; });
   }
-  render(); renderLobby();
+  render(); renderLobby(true);
 }
 
 function cur() {
@@ -395,9 +436,15 @@ function grid(list, empty) {
       <button class="pick" data-pick="${p.id}" aria-label="Elegir foto">${sel.has(p.id) ? '✓' : ''}</button>
       <img src="${esc(urls[p.path] || '')}" alt="${esc(p.caption || 'foto')}" loading="lazy" data-lb="${i}">
       <figcaption>${esc(p.caption || '')}</figcaption>
-      ${p.taken_on ? `<time datetime="${p.taken_on}">${fDay(p.taken_on)}</time>` : ''}
+      <div class="pf">${p.taken_on ? `<time datetime="${p.taken_on}">${fDay(p.taken_on)}</time>` : ''}
+        <button class="star${p.featured ? ' on' : ''}" data-star="${p.id}" aria-pressed="${!!p.featured}" aria-label="Destacada del mes">${p.featured ? '★' : '☆'}</button></div>
     </figure>`).join('')}</div>`;
 }
+
+const monthOf = p => (p.taken_on || p.created_at.slice(0, 10)).slice(0, 7);
+const mesNombre = ym => toDate(ym + '-01').toLocaleDateString('es-AR', { month: 'long' });
+const featOf = (y, m) => photos.filter(p => p.featured && monthOf(p) === `${y}-${pad(m + 1)}`)
+  .sort((a, b) => (a.taken_on || '').localeCompare(b.taken_on || '') || a.created_at.localeCompare(b.created_at));
 
 function renderCal() {
   const days = byDay();
@@ -406,9 +453,11 @@ function renderCal() {
   const dated = albums.filter(a => a.start_date);
   const mes = first.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
 
-  const recent = Object.keys(days).sort().reverse().slice(0, 20);
-  const stories = recent.length ? `<div class="stories">${recent.map(ds => `
-    <button class="story" data-story="${ds}"><span class="ring"><img src="${esc(urls[days[ds][0].path] || '')}" alt="" loading="lazy"></span><small>${fDay(ds)}</small></button>`).join('')}</div>` : '';
+  const fm = featOf(cal.y, cal.m);
+  const feat = `<div class="feat"><h3>★ Destacadas de ${mes.split(' ')[0]}</h3>${fm.length
+    ? `<div class="stories">${fm.map((p, i) => `
+      <button class="story" data-feat="${i}"><span class="ring"><img src="${esc(urls[p.path] || '')}" alt="" loading="lazy"></span><small>${p.taken_on ? fDay(p.taken_on) : ''}</small></button>`).join('')}</div>`
+    : `<p class="hint">Tocá la ☆ abajo de una foto de este mes para que aparezca acá.</p>`}</div>`;
 
   const bar = pick === null
     ? `<div class="pickbar"><button class="btn small" id="pickStart">+ Marcar fechas</button><p class="hint">Tocá un día con fotos para verlas como historia.</p></div>`
@@ -418,14 +467,15 @@ function renderCal() {
   for (let d = 1; d <= n; d++) {
     const ds = `${cal.y}-${pad(cal.m + 1)}-${pad(d)}`, ps = days[ds], rs = dated.filter(a => inRange(ds, a));
     const cls = (ps ? ' ph' : '') + (ds === today ? ' hoy' : '') + (pick && ds === pick ? ' pk' : '');
-    const img = ps ? ` style="--img:url('${esc(urls[ps[0].path] || '')}')"` : '';
+    const dot = ps ? `<span class="dot"><i style="--img:url('${esc(urls[ps[0].path] || '')}')"></i></span>` : '';
     const label = fLong(ds) + (ps ? `, ${plural(ps.length, 'foto')}` : '') + rs.map(a => `, ${a.name}`).join('');
-    cells += `<button class="day${cls}" data-day="${ds}"${img} aria-label="${esc(label)}"><span class="dn">${d}</span>${rs.length ? `<span class="rs">${rs.map(a => `<i style="background:${col(a.id)}"></i>`).join('')}</span>` : ''}</button>`;
+    cells += `<button class="day${cls}" data-day="${ds}" aria-label="${esc(label)}"><span class="dn">${d}</span>${dot}${rs.length ? `<span class="rs">${rs.map(a => `<i style="background:${col(a.id)}"></i>`).join('')}</span>` : ''}</button>`;
   }
 
   const lista = dated.slice().sort((a, b) => b.start_date.localeCompare(a.start_date));
-  return `<div class="cal-wrap">${stories}${bar}
+  return `<div class="cal-wrap">${bar}
     <div class="cal-head"><button class="link" data-cal="-1" aria-label="Mes anterior">‹</button><h2>${mes[0].toUpperCase() + mes.slice(1)}</h2><button class="link" data-cal="1" aria-label="Mes siguiente">›</button></div>
+    ${feat}
     <div class="wk" aria-hidden="true">${['L', 'M', 'M', 'J', 'V', 'S', 'D'].map(x => `<span>${x}</span>`).join('')}</div>
     <div class="cal">${cells}</div>
     <h3 class="sub">Fechas marcadas</h3>
@@ -531,14 +581,15 @@ function go(kind, id) { view = { kind, id }; sel.clear(); pick = null; render();
 
 // --- clicks ---
 document.addEventListener('click', async e => {
-  const t = e.target.closest('[data-pick],[data-lb],[data-open],[data-go],[data-day],[data-story],[data-cal],#newAlbum,#editAlbum,#delAlbum,#pickStart,#pickCancel');
+  const t = e.target.closest('[data-pick],[data-star],[data-lb],[data-open],[data-go],[data-day],[data-feat],[data-cal],#newAlbum,#editAlbum,#delAlbum,#pickStart,#pickCancel');
   if (!t) return;
   if (t.dataset.pick) { const id = t.dataset.pick; sel.has(id) ? sel.delete(id) : sel.add(id); render(); }
+  else if (t.dataset.star) { await toggleStar(photos.find(p => p.id === t.dataset.star)); render(); }
   else if (t.dataset.lb !== undefined) openLb(+t.dataset.lb);
   else if (t.dataset.open) go('album', t.dataset.open);
   else if (t.dataset.go) go(t.dataset.go);
   else if (t.dataset.cal) { const d = new Date(cal.y, cal.m + +t.dataset.cal, 1); cal = { y: d.getFullYear(), m: d.getMonth() }; render(); }
-  else if (t.dataset.story) openStory(t.dataset.story);
+  else if (t.dataset.feat) openStory([featOf(cal.y, cal.m)], 0, +t.dataset.feat, true);
   else if (t.dataset.day) {
     const ds = t.dataset.day;
     if (pick === '') { pick = ds; render(); }
@@ -546,7 +597,7 @@ document.addEventListener('click', async e => {
       const [s, en] = [pick, ds].sort(); pick = null; render();
       const r = await albumDialog({ start: s, end: en }, 'Marcar fechas');
       if (r) await createAlbum(r);
-    } else if (byDay()[ds]) openStory(ds);
+    } else if (byDay()[ds]) openDay(ds);
     else toast('Ese día no tiene fotos todavía');
   }
   else if (t.id === 'pickStart') { pick = ''; render(); }
@@ -679,8 +730,10 @@ function showLb() {
   $('#lbImg').src = urls[p.path] || '';
   $('#lbCap').value = p.caption || '';
   $('#lbDate').value = p.taken_on || '';
-  $('#lbFondo').textContent = p.lobby ? '★ Está de fondo en el inicio' : '☆ Poner de fondo en el inicio';
+  $('#lbFondo').textContent = p.lobby ? '♥ Sale en el inicio' : '♡ Poner en el inicio';
   $('#lbFondo').classList.toggle('on', !!p.lobby);
+  $('#lbStar').textContent = p.featured ? '★ Destacada del mes' : '☆ Destacar del mes';
+  $('#lbStar').classList.toggle('on', !!p.featured);
   $('#lbN').textContent = `${lb.i + 1} / ${lb.list.length}`;
 }
 function closeLb() { $('#lb').hidden = true; render(); }
@@ -711,36 +764,48 @@ $('#lbFondo').addEventListener('click', async () => {
   const p = lb.list[lb.i], lobby = !p.lobby;
   const { error } = await sb.from('photos').update({ lobby }).eq('id', p.id);
   if (error) return toast(error.message);
-  p.lobby = lobby; showLb(); renderLobby();
+  p.lobby = lobby; showLb(); renderLobby(true);
   toast(lobby ? 'Va a aparecer en el inicio ♥' : 'La saqué del inicio');
 });
+async function toggleStar(p) {
+  const featured = !p.featured;
+  const { error } = await sb.from('photos').update({ featured }).eq('id', p.id);
+  if (error) return toast(error.message);
+  p.featured = featured;
+  toast(featured ? `★ Destacada de ${mesNombre(monthOf(p))}` : 'Ya no está destacada');
+}
+$('#lbStar').addEventListener('click', async () => { await toggleStar(lb.list[lb.i]); showLb(); });
 
 // --- historias (fotos de un día, una atrás de otra) ---
 let st = null, t0 = 0;
-function openStory(ds) {
-  const days = byDay(), keys = Object.keys(days).sort();
-  st = { days, keys, di: Math.max(0, keys.indexOf(ds)), pi: 0 };
+// groups: lista de grupos de fotos (un grupo por día, o uno solo con las destacadas)
+function openStory(groups, di, pi = 0, feat = false) {
+  st = { groups, di, pi, feat };
   $('#st').hidden = false; document.body.style.overflow = 'hidden';
   showStory();
 }
+function openDay(ds) {
+  const days = byDay(), keys = Object.keys(days).sort();
+  openStory(keys.map(k => days[k]), Math.max(0, keys.indexOf(ds)));
+}
 function showStory() {
-  const ps = st.days[st.keys[st.di]], p = ps[st.pi], img = $('#stImg');
+  const ps = st.groups[st.di], p = ps[st.pi], img = $('#stImg');
   $('#stBars').innerHTML = ps.map((_, j) => `<span><i class="${j < st.pi ? 'full' : j === st.pi ? 'run' : ''}"></i></span>`).join('');
   $('#stBars .run').addEventListener('animationend', () => stStep(1));
-  $('#stDay').textContent = fLong(st.keys[st.di]);
+  $('#stDay').textContent = (st.feat ? '★ ' : '') + (p.taken_on ? fLong(p.taken_on) : '');
   $('#stCap').textContent = p.caption || ''; $('#stCap').hidden = !p.caption;
   $('#st').classList.add('wait');
   img.onload = img.onerror = () => $('#st').classList.remove('wait');
   img.src = urls[p.path] || '';
   if (img.complete) $('#st').classList.remove('wait');
-  const next = ps[st.pi + 1] || (st.days[st.keys[st.di + 1]] || [])[0];
+  const next = ps[st.pi + 1] || (st.groups[st.di + 1] || [])[0];
   if (next && urls[next.path]) new Image().src = urls[next.path];
 }
 function stStep(d) {
   if (!st) return;
   st.pi += d;
-  if (st.pi >= st.days[st.keys[st.di]].length) { st.di++; st.pi = 0; if (st.di >= st.keys.length) return closeStory(); }
-  else if (st.pi < 0) { if (st.di === 0) st.pi = 0; else { st.di--; st.pi = st.days[st.keys[st.di]].length - 1; } }
+  if (st.pi >= st.groups[st.di].length) { st.di++; st.pi = 0; if (st.di >= st.groups.length) return closeStory(); }
+  else if (st.pi < 0) { if (st.di === 0) st.pi = 0; else { st.di--; st.pi = st.groups[st.di].length - 1; } }
   showStory();
 }
 function closeStory() { st = null; $('#st').hidden = true; $('#st').classList.remove('hold'); document.body.style.overflow = ''; }
