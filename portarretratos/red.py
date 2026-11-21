@@ -1,7 +1,7 @@
 # Wi-Fi, hora (NTP), clima de Open-Meteo y fechas importantes cargadas en la página (Supabase).
 # Todo es "de a una cosa por vez" para que los ojitos no se traben: tarea() se llama en cada vuelta
 # del loop y como mucho hace un pedido a internet.
-import network, time, json
+import network, time, json, gc
 try:
     import requests
 except ImportError:
@@ -85,17 +85,38 @@ def tarea(now):
     try:
         if _vence('hora', now, HORA_MS):
             _hora(now)
-        elif _vence('clima', now, CLIMA_MS):
-            _clima(now)
         elif CLAVE and _vence('fechas', now, FECHAS_MS):
             _fechas(now)
+        elif _vence('clima', now, CLIMA_MS):
+            _clima(now)
     except Exception as e:
-        print('red:', e)
+        print('red:', repr(e))
+
+
+def arranque(espera_ms=15000):
+    # Al prender: espera el Wi-Fi y baja hora, fechas y clima ANTES de que arranquen las animaciones,
+    # cuando la memoria está más ordenada (la conexión segura con el álbum necesita un bloque grande).
+    if not SSID:
+        return
+    t0 = ticks()
+    while not wlan.isconnected() and diff(ticks(), t0) < espera_ms:
+        time.sleep_ms(200)
+    if not wlan.isconnected():
+        print('red: sin Wi-Fi al arrancar')
+        return
+    for paso in (_hora, _fechas, _clima):
+        if paso is _fechas and not CLAVE:
+            continue
+        try:
+            paso(ticks())
+        except Exception as e:
+            print('red:', paso.__name__, repr(e))
 
 
 # ---------- hora ----------
 def _hora(now):
     _t['hora'] = add(now, 60000 - HORA_MS)       # si falla, reintenta en 1 minuto
+    gc.collect()
     import ntptime
     ntptime.host = 'pool.ntp.org'
     ntptime.settime()
@@ -131,7 +152,8 @@ def es_noche():
 # ---------- clima ----------
 def _clima(now):
     _t['clima'] = add(now, 60000 - CLIMA_MS)
-    url = ('http://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s'
+    gc.collect()
+    url =('http://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s'
            '&current=temperature_2m,weather_code,is_day') % (cfg('LAT', -34.86), cfg('LON', -57.91))
     r = requests.get(url)
     try:
@@ -146,6 +168,7 @@ def _clima(now):
 def _fechas(now):
     global fechas
     _t['fechas'] = add(now, 120000 - FECHAS_MS)
+    gc.collect()                                  # la conexión segura necesita un bloque de memoria grande
     h = {'apikey': SB_KEY, 'Content-Type': 'application/json'}
     r = requests.post(SB_URL + '/auth/v1/token?grant_type=password', headers=h,
                       data=json.dumps({'email': SB_EMAIL, 'password': CLAVE}))
@@ -156,6 +179,8 @@ def _fechas(now):
     if 'access_token' not in j:
         raise Exception('no pude entrar al álbum: revisá ALBUM_CLAVE en settings.py')
     h['Authorization'] = 'Bearer ' + j['access_token']
+    j = None
+    gc.collect()
     r = requests.get(SB_URL + '/rest/v1/fechas?select=nombre,fecha,anual', headers=h)
     try:
         data = r.json()

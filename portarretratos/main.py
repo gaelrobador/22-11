@@ -398,6 +398,11 @@ def main():
     center(['Hola ♥'], 0, H)
     oled.show()
     R.iniciar()
+    if R.configurado():
+        oled.fill(0)
+        center(['Hola ♥', '', 'conectando...'], 0, H)
+        oled.show()
+        R.arranque()
     t = Touch(touch, ACTIVO)
     last_touch = despierto = ticks()
     while True:
