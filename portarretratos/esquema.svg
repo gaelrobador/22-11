@@ -47,13 +47,13 @@
   <g font-size="15" font-weight="700" fill="#fff">
     <text x="1036" y="295">GND</text>
     <text x="1036" y="335">VCC</text>
-    <text x="1036" y="375">SCL</text>
+    <text x="1036" y="375">SCL (SCK)</text>
     <text x="1036" y="415">SDA</text>
   </g>
   <g fill="#e8c547" stroke="#8a6d00" stroke-width="1.5">
     <circle cx="1020" cy="290" r="7"/><circle cx="1020" cy="330" r="7"/><circle cx="1020" cy="370" r="7"/><circle cx="1020" cy="410" r="7"/>
   </g>
-  <text x="1170" y="512" text-anchor="middle" font-size="18" font-weight="700" fill="#1f4e8c">OLED SSD1306 128x64 (I2C)</text>
+  <text x="1170" y="512" text-anchor="middle" font-size="18" font-weight="700" fill="#1f4e8c">OLED 1.3" SH1106 128x64 (I2C)</text>
 
   <!-- ===== Sensor táctil TTP223 ===== -->
   <rect x="230" y="235" width="140" height="215" rx="10" fill="#c0392b" stroke="#7b1d14" stroke-width="3"/>

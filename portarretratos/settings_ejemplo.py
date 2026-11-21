@@ -32,7 +32,12 @@ NOCHE_BRILLO = 1          # brillo de noche (0 a 255)
 VOLVER_S = 30             # segundos sin tocarlo para volver a los ojitos
 ABURRIDO_MIN = 20         # minutos sin tocarlo para que se aburra
 
+# ---- Pantalla ----
+OLED = "sh1106"           # "sh1106" (1.3") o "ssd1306" (0.96")
+OLED_ADDR = 0x3C          # si i2c.scan() da [61], poné 0x3D
+OLED_ROTAR = 0            # 180 si se ve dada vuelta
+
 # ---- Pines ----
-SDA, SCL = 6, 7           # OLED
+SDA, SCL = 6, 7           # OLED (en algunas pantallas SCL dice SCK)
 TOUCH = 3                 # salida I/O del TTP223
 TOUCH_ACTIVO = 1          # el TTP223 da 1 al tocarlo; si está configurado al revés, poné 0

@@ -1,4 +1,4 @@
-# Robotito 22·11: ESP32-C3 SuperMini + OLED SSD1306 128x64 (I2C) + sensor táctil TTP223
+# Robotito 22·11: ESP32-C3 SuperMini + OLED 1.3" SH1106 128x64 (I2C) + sensor táctil TTP223
 #
 # Tocar una vez        -> pantalla siguiente: ojitos > hora y clima > QR > días juntos > próximas fechas > frase del día
 # Mantener (caricia)   -> vuelve a los ojitos y se pone feliz (^ ^) con corazoncitos
@@ -17,7 +17,7 @@
 # La configuración (Wi-Fi, clave del álbum, fechas, horarios) está en settings.py.
 
 from machine import Pin, I2C
-import ssd1306, time, random
+import time, random
 import dibujo as D
 from dibujo import put, center, wrap, heart, rrect, big
 import red as R
@@ -33,7 +33,12 @@ TEXTO_QR = ["Escaneá", "esto", "", "  <3"]     # el QR lleva a https://gaelroba
 DIAS = ('lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom')
 
 i2c = I2C(0, sda=Pin(cfg('SDA', 6)), scl=Pin(cfg('SCL', 7)), freq=400000)
-oled = ssd1306.SSD1306_I2C(W, H, i2c)
+if cfg('OLED', 'sh1106') == 'ssd1306':        # pantallas de 0.96"
+    import ssd1306
+    oled = ssd1306.SSD1306_I2C(W, H, i2c, addr=cfg('OLED_ADDR', 0x3C))
+else:                                         # pantallas de 1.3" (SH1106)
+    import sh1106
+    oled = sh1106.SH1106_I2C(W, H, i2c, addr=cfg('OLED_ADDR', 0x3C), rotate=cfg('OLED_ROTAR', 0))
 D.init(oled)
 ACTIVO = cfg('TOUCH_ACTIVO', 1)
 touch = Pin(cfg('TOUCH', 3), Pin.IN, Pin.PULL_DOWN if ACTIVO else Pin.PULL_UP)
