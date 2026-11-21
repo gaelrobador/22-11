@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="960" viewBox="0 0 1400 960" font-family="Helvetica, Arial, sans-serif">
+  <rect width="1400" height="960" fill="#ffffff"/>
+  <text x="700" y="44" text-anchor="middle" font-size="30" font-weight="700" fill="#123a30">Robotito 22·11 — esquema de conexiones</text>
+
+  <!-- ===== ESP32-C3 SuperMini ===== -->
+  <rect x="612" y="128" width="96" height="40" rx="10" fill="#9aa5ad" stroke="#5f6b73" stroke-width="2"/>
+  <text x="660" y="153" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">USB-C</text>
+  <rect x="560" y="160" width="200" height="460" rx="14" fill="#1d3557" stroke="#0f1f33" stroke-width="3"/>
+  <rect x="610" y="440" width="100" height="80" rx="6" fill="#c9ccd1" stroke="#7a7f86" stroke-width="2"/>
+  <text x="660" y="485" text-anchor="middle" font-size="13" fill="#333">ESP32-C3</text>
+  <text x="660" y="660" text-anchor="middle" font-size="18" font-weight="700" fill="#1d3557">ESP32-C3 SuperMini</text>
+  <text x="660" y="682" text-anchor="middle" font-size="13" fill="#555">(vista de frente, USB arriba)</text>
+
+  <!-- pines izquierda -->
+  <g font-size="15" fill="#fff">
+    <text x="578" y="225">5V</text>
+    <text x="578" y="275" font-weight="700">GND</text>
+    <text x="578" y="325" font-weight="700">3V3</text>
+    <text x="578" y="375">4</text>
+    <text x="578" y="425" font-weight="700">3</text>
+    <text x="578" y="475" opacity=".7">2</text>
+    <text x="578" y="525" opacity=".7">1</text>
+    <text x="578" y="575" opacity=".7">0</text>
+  </g>
+  <!-- pines derecha -->
+  <g font-size="15" fill="#fff" text-anchor="end">
+    <text x="742" y="225">5</text>
+    <text x="742" y="275" font-weight="700">6</text>
+    <text x="742" y="325" font-weight="700">7</text>
+    <text x="742" y="375">8</text>
+    <text x="742" y="425">9 (BOOT)</text>
+    <text x="742" y="475">10</text>
+    <text x="742" y="525">20</text>
+    <text x="742" y="575">21</text>
+  </g>
+  <g fill="#e8c547" stroke="#8a6d00" stroke-width="1.5">
+    <circle cx="560" cy="220" r="7"/><circle cx="560" cy="270" r="7"/><circle cx="560" cy="320" r="7"/><circle cx="560" cy="370" r="7"/>
+    <circle cx="560" cy="420" r="7"/><circle cx="560" cy="470" r="7"/><circle cx="560" cy="520" r="7"/><circle cx="560" cy="570" r="7"/>
+    <circle cx="760" cy="220" r="7"/><circle cx="760" cy="270" r="7"/><circle cx="760" cy="320" r="7"/><circle cx="760" cy="370" r="7"/>
+    <circle cx="760" cy="420" r="7"/><circle cx="760" cy="470" r="7"/><circle cx="760" cy="520" r="7"/><circle cx="760" cy="570" r="7"/>
+  </g>
+
+  <!-- ===== OLED ===== -->
+  <rect x="1020" y="230" width="300" height="250" rx="10" fill="#1f4e8c" stroke="#123056" stroke-width="3"/>
+  <rect x="1095" y="262" width="205" height="186" rx="4" fill="#05080c"/>
+  <text x="1197" y="368" text-anchor="middle" font-size="44" font-style="italic" font-weight="700" fill="#e9f3ff">22·11</text>
+  <g font-size="15" font-weight="700" fill="#fff">
+    <text x="1036" y="295">GND</text>
+    <text x="1036" y="335">VCC</text>
+    <text x="1036" y="375">SCL</text>
+    <text x="1036" y="415">SDA</text>
+  </g>
+  <g fill="#e8c547" stroke="#8a6d00" stroke-width="1.5">
+    <circle cx="1020" cy="290" r="7"/><circle cx="1020" cy="330" r="7"/><circle cx="1020" cy="370" r="7"/><circle cx="1020" cy="410" r="7"/>
+  </g>
+  <text x="1170" y="512" text-anchor="middle" font-size="18" font-weight="700" fill="#1f4e8c">OLED SSD1306 128x64 (I2C)</text>
+
+  <!-- ===== Pulsador ===== -->
+  <rect x="290" y="300" width="80" height="90" rx="8" fill="#2b2b2b" stroke="#111" stroke-width="2"/>
+  <circle cx="330" cy="345" r="24" fill="#d94f4f" stroke="#7a1f1f" stroke-width="2"/>
+  <text x="330" y="430" text-anchor="middle" font-size="18" font-weight="700" fill="#333" dy="40">Pulsador</text>
+
+  <!-- ===== cables (borde blanco para que se vea cuál pasa por arriba) ===== -->
+  <g fill="none" stroke-linejoin="round" stroke-linecap="round">
+    <!-- GND -> pulsador -->
+    <path d="M530 270 H330 V300" stroke="#fff" stroke-width="11"/>
+    <path d="M530 270 H330 V300" stroke="#222" stroke-width="6"/>
+    <!-- 3V3 -> VCC OLED (rojo) -->
+    <path d="M560 320 H510 V80 H990 V330 H1020" stroke="#fff" stroke-width="11"/>
+    <path d="M560 320 H510 V80 H990 V330 H1020" stroke="#d62828" stroke-width="6"/>
+    <!-- GND -> GND OLED (negro) -->
+    <path d="M560 270 H530 V110 H970 V290 H1020" stroke="#fff" stroke-width="11"/>
+    <path d="M560 270 H530 V110 H970 V290 H1020" stroke="#222" stroke-width="6"/>
+    <!-- GPIO7 -> SCL (amarillo) -->
+    <path d="M760 320 H900 V370 H1020" stroke="#fff" stroke-width="11"/>
+    <path d="M760 320 H900 V370 H1020" stroke="#e0a800" stroke-width="6"/>
+    <!-- GPIO6 -> SDA (azul) -->
+    <path d="M760 270 H860 V410 H1020" stroke="#fff" stroke-width="11"/>
+    <path d="M760 270 H860 V410 H1020" stroke="#1e88e5" stroke-width="6"/>
+    <!-- GPIO3 -> pulsador (verde) -->
+    <path d="M560 420 H330 V390" stroke="#fff" stroke-width="11"/>
+    <path d="M560 420 H330 V390" stroke="#2e9e4f" stroke-width="6"/>
+  </g>
+  <circle cx="530" cy="270" r="7" fill="#222"/>
+
+  <!-- etiquetas de cables -->
+  <g font-size="14" font-weight="700">
+    <text x="750" y="72" fill="#d62828">3V3 → VCC</text>
+    <text x="750" y="102" fill="#222">GND → GND</text>
+    <text x="870" y="262" fill="#1e88e5">SDA</text>
+    <text x="910" y="312" fill="#b38600">SCL</text>
+    <text x="400" y="262" fill="#222">GND</text>
+    <text x="400" y="412" fill="#2e9e4f">GPIO3</text>
+  </g>
+
+  <!-- ===== tabla ===== -->
+  <rect x="60" y="720" width="1280" height="210" rx="14" fill="#f1f7f4" stroke="#cfe3da"/>
+  <text x="90" y="758" font-size="20" font-weight="700" fill="#123a30">Conexiones</text>
+  <g font-size="17" fill="#123a30">
+    <circle cx="98" cy="789" r="7" fill="#d62828"/><text x="114" y="795">OLED VCC → 3V3</text>
+    <circle cx="98" cy="821" r="7" fill="#222"/><text x="114" y="827">OLED GND → GND</text>
+    <circle cx="98" cy="853" r="7" fill="#1e88e5"/><text x="114" y="859">OLED SDA → GPIO6</text>
+    <circle cx="98" cy="885" r="7" fill="#e0a800"/><text x="114" y="891">OLED SCL → GPIO7</text>
+    <circle cx="398" cy="789" r="7" fill="#2e9e4f"/><text x="414" y="795">Pulsador, una pata → GPIO3</text>
+    <circle cx="398" cy="821" r="7" fill="#222"/><text x="414" y="827">Pulsador, otra pata → GND</text>
+  </g>
+  <g font-size="15" fill="#4d6f66">
+    <text x="760" y="790">• El pulsador no lleva resistencia (usa el pull-up interno).</text>
+    <text x="760" y="818">• Sin pulsador: poné BTN = 9 en main.py y usá el botón BOOT.</text>
+    <text x="760" y="846">• El orden de los pines del OLED cambia según el módulo</text>
+    <text x="774" y="868">(GND-VCC o VCC-GND): guiate por lo que dice impreso.</text>
+    <text x="760" y="896">• Pulsador de 4 patas: usá dos en diagonal.</text>
+  </g>
+</svg>
