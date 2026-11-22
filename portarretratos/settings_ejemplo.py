@@ -14,7 +14,7 @@ WIFI_TXPOWER = 8.5        # la C3 SuperMini conecta mejor con potencia baja; si 
 ALBUM_CLAVE = ""
 
 # ---- Fechas ----
-INICIO = (2024, 11, 22)   # el primer 22/11: de acá salen los días juntos y el aniversario
+INICIO = (2023, 11, 22)   # el primer 22/11: de acá salen los días juntos y el aniversario
 # Fechas extra fijas, además de las de la página: ("nombre", "AAAA-MM-DD", se_repite_todos_los_años)
 FECHAS = [
     # ("Examen de algo", "2026-12-10", False),

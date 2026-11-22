@@ -25,7 +25,7 @@ SB_EMAIL = 'nosotros@2211.com'
 SSID, PASS = cfg('WIFI_SSID', ''), cfg('WIFI_PASS', '')
 CLAVE = cfg('ALBUM_CLAVE', '')
 TZ = cfg('TZ_HORAS', -3)
-INICIO = cfg('INICIO', (2024, 11, 22))
+INICIO = cfg('INICIO', (2023, 11, 22))
 
 HORA_MS, CLIMA_MS, FECHAS_MS = 6 * 3600000, 15 * 60000, 30 * 60000
 TIMEOUT = 10          # segundos: si internet no contesta, se corta y reintenta más tarde (el robot nunca se cuelga)

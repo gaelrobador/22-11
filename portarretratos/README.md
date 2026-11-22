@@ -20,7 +20,14 @@ Pruebas: `mpremote connect /dev/ttyACM0 run prueba_fechas.py` (arranque paso a p
 `prueba_https.py` (conexión segura).
 
 ## Usarlo
-- Tocar: pantalla siguiente (ojitos → hora y clima → QR → días juntos → próximas fechas → frase del día).
-- Mantener: caricia. Mucho rato: se enamora. Dos toques en los ojitos: sorpresa.
-- Las fechas importantes se cargan desde la página (Calendario → Fechas importantes) y el robot las baja cada 30 min.
+- **Tocar:** pantalla siguiente (ojitos → hora y clima → QR → días juntos → próximas fechas → frase del día).
+- **En los ojitos:** 2 toques = sorpresa · 3 toques = guiño y "te quiero" · 8 toques rápidos = se marea ("¡basta!").
+- **Mantener:** caricia (^ ^). Más de 2,5 s: se enamora. Más de 6 s: se duerme de placer y ronronea.
+- **Solo, cuando nadie lo toca:** juega con una pelotita, persigue una mariposa, se esconde, te busca, guiña,
+  canta o estornuda (cada 1 a 3 minutos). A los 20 minutos se aburre.
+- **Momentos especiales:** a las 22:11 fiesta de corazones; el 22 de cada mes más ojitos de corazón;
+  en los cumples gorrito y confeti; a las 7 se despierta y dice "¡Buen día!".
+- Las fechas importantes se cargan desde la página (Calendario → Fechas importantes) y el robot las baja al arrancar y cada 30 min.
 - Para cambiar el QR: `python gen_qr.py "link"` en la PC y copiar el `qr_data.py` nuevo.
+
+Cómo se ven: `pantallas.png` y `escenas.png` (simulación).
